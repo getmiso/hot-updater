@@ -18,6 +18,7 @@ const s3Client = new S3Client();
 const app = new Hono();
 app.use(logger());
 
+app.get("/ping", (c) => c.text("pong"));
 app.get("/api/check-update", async (c) => {
   try {
     const bundleId = c.req.header("x-bundle-id") as string;
