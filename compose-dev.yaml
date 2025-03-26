@@ -1,0 +1,83 @@
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - DEBUG=${DEBUG:-0}
+    volumes:
+      - "./localstack.sh:/etc/localstack/init/ready.d/init.sh"
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localstack:4566/_localstack/init/ready | grep '\"completed\": true'" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+  hot-updater-db:
+    image: postgres:12.16
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./plugins/postgres/sql:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - '5432:5432'
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin4
+    ports:
+      - '5100:80'
+    depends_on:
+      - hot-updater-db
+  console-app:
+    build:
+      context: .
+      dockerfile: console.Dockerfile
+    ports:
+      - '3100:3000'
+    restart: always
+    environment:
+      - HOT_UPDATER_POSTGRES_HOST=hot-updater-db
+      - HOT_UPDATER_POSTGRES_PORT=5432
+      - HOT_UPDATER_POSTGRES_USER=postgres
+      - HOT_UPDATER_POSTGRES_PASSWORD=postgrespassword
+      - HOT_UPDATER_POSTGRES_DATABASE=postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - hot-updater-db
+  api-app:
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    ports:
+      - '3200:3000'
+    restart: always
+    environment:
+      - HOT_UPDATER_POSTGRES_HOST=hot-updater-db
+      - HOT_UPDATER_POSTGRES_PORT=5432
+      - HOT_UPDATER_POSTGRES_USER=postgres
+      - HOT_UPDATER_POSTGRES_PASSWORD=postgrespassword
+      - HOT_UPDATER_POSTGRES_DATABASE=postgres
+      - HOT_UPDATER_S3_BUCKET_NAME=hot-updater
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT=http://localstack:4566
+      - JWT_SECRET=229b6dad821c484fcc749627f5508fa18825701085d76a0ff0e87ae22362a836
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - hot-updater-db
+volumes:
+  db_data:
