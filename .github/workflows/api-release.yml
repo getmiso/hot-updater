@@ -16,6 +16,7 @@ jobs:
     with:
       deployment-name: hot-updater-api
       image-name: miso/hot-updater-api
+      docker-file: api.Dockerfile
 
       # Immutable
       git-config-app-id: ${{ vars.GIT_CONFIG_APP_ID }}
