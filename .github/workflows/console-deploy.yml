@@ -1,0 +1,42 @@
+name: Deploy hot-updater-console
+run-name: Deploy hot-updater-console [${{inputs.stage}}]
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        default: front
+        description: 'k8s namespace: '
+        options:
+          - front
+        required: true
+        type: choice
+      stage:
+        default: staging
+        description: 'Environment: '
+        options:
+          - production
+          - staging
+        required: true
+        type: choice
+      tag_name:
+        description: 'Container image tag(Optional): '
+        required: false
+        type: string
+
+jobs:
+  deployment:
+    name: hot-updater-console [${{inputs.stage}}]
+    secrets:
+      git-config-private-key: ${{ secrets.GIT_CONFIG_PRIVATE_KEY }}
+      workflow-slack-webhook-url: ${{ secrets.WORKFLOW_SLACK_WEBHOOK_URL}}
+    uses: getmiso/workflows/.github/workflows/deploy-eks-argocd.yml@v1
+    with:
+      deployment-name: hot-updater-console
+      image-name: miso/hot-updater-console
+
+      # Immutable
+      git-config-app-id: ${{ vars.GIT_CONFIG_APP_ID }}
+      namespace: ${{inputs.namespace}}
+      stage: ${{inputs.stage}}
+      tag_name: ${{inputs.tag_name}}

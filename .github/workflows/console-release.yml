@@ -1,0 +1,30 @@
+name: Release on production hot-updater-console
+run-name: Release-EKS hot-updater-console [${{ github.event.release.tag_name }}]
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    name: hot-updater-console [${{ github.event.release.tag_name }}]
+    secrets:
+      git-config-private-key: ${{ secrets.GIT_CONFIG_PRIVATE_KEY }}
+      workflow-slack-webhook-url: ${{ secrets.WORKFLOW_SLACK_WEBHOOK_URL}}
+    uses: getmiso/workflows/.github/workflows/deploy-eks-argocd.yml@v1
+    with:
+      deployment-name: hot-updater-console
+      image-name: miso/hot-updater-console
+
+      # Immutable
+      git-config-app-id: ${{ vars.GIT_CONFIG_APP_ID }}
+      namespace: front # almost front
+      release_application: ${{ github.repository }}
+      release_changes: ${{ toJson(github.event.release.body) }}
+      release_commit: ${{ github.event.release.target_commitish }}
+      release_enabled: true
+      release_link: ${{ github.event.release.html_url }}
+      release_name: ${{ github.event.release.name }}
+      stage: production
+      tag_name: ${{ github.event.release.tag_name }}
