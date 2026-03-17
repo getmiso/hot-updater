@@ -29,8 +29,7 @@ jobs:
     name: hot-updater-console [${{inputs.stage}}]
     secrets:
       git-config-private-key: ${{ secrets.GIT_CONFIG_PRIVATE_KEY }}
-      workflow-slack-webhook-url: ${{ secrets.WORKFLOW_SLACK_WEBHOOK_URL}}
-    uses: getmiso/workflows/.github/workflows/deploy-eks-argocd.yml@v1
+    uses: getmiso/workflows/.github/workflows/deploy-eks-argocd-modular.yml@v2
     with:
       deployment-name: hot-updater-console
       image-name: miso/hot-updater-console
@@ -40,4 +39,4 @@ jobs:
       git-config-app-id: ${{ vars.GIT_CONFIG_APP_ID }}
       namespace: ${{inputs.namespace}}
       stage: ${{inputs.stage}}
-      tag_name: ${{inputs.tag_name}}
+      tag-name: ${{inputs.tag_name}}
