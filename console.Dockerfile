@@ -26,6 +26,10 @@ export default { \n\
 
 RUN pnpm run build
 
+RUN groupadd -g 1001 miso && useradd -u 1001 -g miso -s /bin/sh -m miso
+
+USER 1001
+
 EXPOSE 3000
 
 CMD ["pnpm", "--filter", "@hot-updater/console", "run", "dev", "--host"]
